@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Automatizado de Estufa | Domínio Público</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        greenGradStart: '#064e3b',
+                        greenGradEnd: '#022c22'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- ==================== 1. FOLHA DE ROSTO / CAPA DO PROJETO ==================== -->
+    <header class="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white border-b-4 border-emerald-500 shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto">
+                <span class="inline-block px-4 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 rounded-full border border-emerald-400/30 mb-4">
+                    <i class="fa-solid fa-scale-balanced mr-1"></i> Projeto de Domínio Público & Código Aberto
+                </span>
+                <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-4 text-emerald-100">
+                    Controle Automatizado de Estufa
+                </h1>
+                <p class="text-lg text-emerald-200/90 font-light leading-relaxed mb-6">
+                    Sistema Integrado de Monitoramento, Climatização e Automação de Microclimas
+                </p>
+            </div>
+
+            <!-- CARD DE OBJETIVOS E EQUIPE -->
+            <div class="mt-8 bg-slate-800/80 rounded-2xl p-6 sm:p-8 border border-emerald-500/30 shadow-2xl glass-panel text-slate-100">
+                <h2 class="text-xl font-bold text-emerald-400 mb-4 flex items-center gap-2 border-b border-slate-700 pb-3">
+                    <i class="fa-solid fa-bullseye text-emerald-400"></i> Objetivos do Projeto & Equipe
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm mb-6">
+                    <div>
+                        <h3 class="font-semibold text-emerald-300 mb-2 text-base flex items-center gap-2">
+                            <i class="fa-solid fa-circle-dot text-xs text-emerald-400"></i> Objetivo Geral
+                        </h3>
+                        <p class="text-slate-300 leading-relaxed">
+                            Desenvolver uma solução acessível de automação agrícola e botânica, unindo interface web interativa em tempo real a um sistema de controle físico microcontrolado (ESP32) para garantir o desenvolvimento ideal de cultivos sob rigorosos padrões de temperatura, umidade e luminosidade.
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-emerald-300 mb-2 text-base flex items-center gap-2">
+                            <i class="fa-solid fa-users text-xs text-emerald-400"></i> Equipe Desenvolvedora
+                        </h3>
+                        <ul class="space-y-1.5 text-slate-300">
+                            <li><i class="fa-solid fa-check text-emerald-400 mr-2 text-xs"></i><strong>Francisco Augusto Angelon</strong></li>
+                            <li><i class="fa-solid fa-check text-emerald-400 mr-2 text-xs"></i><strong>Giovanna de Morais Nunes</strong></li>
+                            <li><i class="fa-solid fa-check text-emerald-400 mr-2 text-xs"></i><strong>Henrique Gava Ávila</strong></li>
+                            <li><i class="fa-solid fa-check text-emerald-400 mr-2 text-xs"></i><strong>Lucas Barbosa de Moraes</strong></li>
+                            <li><i class="fa-solid fa-check text-emerald-400 mr-2 text-xs"></i><strong>Victor Hugo Rodrigues da Silva</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- BANNER DE STATUS DE CONEXÃO -->
+    <div class="bg-slate-800 text-white text-xs sm:text-sm py-2 px-4 border-b border-slate-700">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center space-x-3">
+                <span class="flex items-center gap-1.5 font-medium">
+                    <span id="status-indicator" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span id="status-text">Hardware Não Conectado (Modo Simulação)</span>
+                </span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span><i class="fa-solid fa-wifi text-emerald-400 mr-1"></i> MQTT: <span id="mqtt-status" class="text-slate-400">Desconectado</span></span>
+                <span><i class="fa-solid fa-usb text-blue-400 mr-1"></i> Serial: <span id="serial-status" class="text-slate-400">Off</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL (PAINEL DE NAVEGAÇÃO E DASHBOARD) -->
+    <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 flex-grow w-full">
+
+        <!-- ABAS DE NAVEGAÇÃO -->
+        <div class="flex overflow-x-auto space-x-2 border-b border-slate-300 pb-2 mb-8 scrollbar-none">
+            <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="tab-btn active bg-emerald-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 whitespace-nowrap shadow">
+                <i class="fa-solid fa-chart-line"></i> Dashboard
+            </button>
+            <button onclick="switchTab('especificacoes')" id="tab-btn-especificacoes" class="tab-btn bg-white text-slate-700 hover:bg-slate-200 px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-book-open"></i> Especificações & Desenvolvimento
+            </button>
+            <button onclick="switchTab('atuadores')" id="tab-btn-atuadores" class="tab-btn bg-white text-slate-700 hover:bg-slate-200 px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-toggle-on"></i> Atuadores & Regras
+            </button>
+            <button onclick="switchTab('conexao')" id="tab-btn-conexao" class="tab-btn bg-white text-slate-700 hover:bg-slate-200 px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-network-wired"></i> Conexão Hardware
+            </button>
+            <button onclick="switchTab('codigo')" id="tab-btn-codigo" class="tab-btn bg-white text-slate-700 hover:bg-slate-200 px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-code"></i> Código ESP32
+            </button>
+            <button onclick="switchTab('esquema')" id="tab-btn-esquema" class="tab-btn bg-white text-slate-700 hover:bg-slate-200 px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-microchip"></i> Esquema Elétrico
+            </button>
+            <button onclick="switchTab('simulador')" id="tab-btn-simulador" class="tab-btn bg-white text-slate-700 hover:bg-slate-200 px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-sliders"></i> Simulador
+            </button>
+            <button onclick="switchTab('logs')" id="tab-btn-logs" class="tab-btn bg-white text-slate-700 hover:bg-slate-200 px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-database"></i> Histórico & Exportar
+            </button>
+        </div>
+
+        <!-- ==================== SEÇÃO: DASHBOARD ==================== -->
+        <section id="tab-dashboard" class="tab-content space-y-6">
+            <!-- CARDS DE LEITURAS EM TEMPO REAL -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- TEMPERATURA -->
+                <div class="bg-white rounded-2xl p-6 shadow-md border-l-4 border-amber-500">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Temperatura do Ar</p>
+                            <h3 id="val-temp" class="text-3xl font-extrabold text-slate-800 mt-2">24.5 °C</h3>
+                        </div>
+                        <div class="p-3 bg-amber-100 text-amber-600 rounded-xl">
+                            <i class="fa-solid fa-temperature-high text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between text-xs text-slate-500 border-t pt-3">
+                        <span>Ideal: 20°C - 28°C</span>
+                        <span id="status-temp" class="px-2 py-0.5 rounded font-semibold bg-emerald-100 text-emerald-800">Normal</span>
+                    </div>
+                </div>
+
+                <!-- UMIDADE DO AR -->
+                <div class="bg-white rounded-2xl p-6 shadow-md border-l-4 border-cyan-500">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Umidade do Ar</p>
+                            <h3 id="val-umid-ar" class="text-3xl font-extrabold text-slate-800 mt-2">65 %</h3>
+                        </div>
+                        <div class="p-3 bg-cyan-100 text-cyan-600 rounded-xl">
+                            <i class="fa-solid fa-droplet text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between text-xs text-slate-500 border-t pt-3">
+                        <span>Ideal: 50% - 80%</span>
+                        <span id="status-umid-ar" class="px-2 py-0.5 rounded font-semibold bg-emerald-100 text-emerald-800">Normal</span>
+                    </div>
+                </div>
+
+                <!-- UMIDADE DO SOLO -->
+                <div class="bg-white rounded-2xl p-6 shadow-md border-l-4 border-emerald-600">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Umidade do Solo</p>
+                            <h3 id="val-umid-solo" class="text-3xl font-extrabold text-slate-800 mt-2">55 %</h3>
+                        </div>
+                        <div class="p-3 bg-emerald-100 text-emerald-700 rounded-xl">
+                            <i class="fa-solid fa-plant-wilt text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between text-xs text-slate-500 border-t pt-3">
+                        <span>Min: 40%</span>
+                        <span id="status-umid-solo" class="px-2 py-0.5 rounded font-semibold bg-emerald-100 text-emerald-800">Úmido</span>
+                    </div>
+                </div>
+
+                <!-- LUMINOSIDADE -->
+                <div class="bg-white rounded-2xl p-6 shadow-md border-l-4 border-yellow-500">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Luminosidade</p>
+                            <h3 id="val-luz" class="text-3xl font-extrabold text-slate-800 mt-2">780 Lux</h3>
+                        </div>
+                        <div class="p-3 bg-yellow-100 text-yellow-600 rounded-xl">
+                            <i class="fa-solid fa-sun text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between text-xs text-slate-500 border-t pt-3">
+                        <span>Min: 500 Lux</span>
+                        <span id="status-luz" class="px-2 py-0.5 rounded font-semibold bg-emerald-100 text-emerald-800">Adequada</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRÁFICO DE TEMPO REAL -->
+            <div class="bg-white p-6 rounded-2xl shadow-md">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                    <h2 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-chart-area text-emerald-600 mr-2"></i> Monitoramento do Microclima em Tempo Real</h2>
+                    <span class="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Atualizado a cada 2s</span>
+                </div>
+                <div class="relative h-72 sm:h-80 w-full">
+                    <canvas id="telemetryChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SEÇÃO: ESPECIFICAÇÕES & DESENVOLVIMENTO ==================== -->
+        <section id="tab-especificacoes" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-md space-y-6">
+                <div class="border-b pb-4">
+                    <h2 class="text-2xl font-extrabold text-slate-800"><i class="fa-solid fa-book-open text-emerald-600 mr-2"></i> Especificações e Desenvolvimento do Projeto</h2>
+                    <p class="text-sm text-slate-500 mt-1">Detalhamento técnico, arquitetura de hardware, software e etapas de engenharia desenvolvidas pela equipe.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div class="space-y-4">
+                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                            <h3 class="font-bold text-emerald-800 text-base mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-microchip text-emerald-600"></i> 1. Especificações de Hardware
+                            </h3>
+                            <ul class="space-y-2 text-slate-600 list-disc list-inside">
+                                <li><strong>Microcontrolador ESP32:</strong> Núcleo Tensilica Dual-Core de 32 bits com Wi-Fi e Bluetooth integrados para transmissão de telemetria sem fio.</li>
+                                <li><strong>Sensor DHT22:</strong> Alta precisão na medição de temperatura (-40 a 80°C) e umidade relativa do ar (0 a 100%).</li>
+                                <li><strong>Sensor de Umidade do Solo:</strong> Eletrodos analógicos para detecção volumétrica de umidade na terra.</li>
+                                <li><strong>Sensor LDR:</strong> Fotorresistor conectado a divisor de tensão para monitoramento de luxes (luminosidade).</li>
+                                <li><strong>Módulo Relé de 4 Canais:</strong> Isolamento por optoacopladores para acionamento seguro de cargas (bomba de irrigação, exaustor, lâmpadas Grow e nebulizador).</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                            <h3 class="font-bold text-emerald-800 text-base mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-code text-emerald-600"></i> 2. Arquitetura de Software & Web
+                            </h3>
+                            <ul class="space-y-2 text-slate-600 list-disc list-inside">
+                                <li><strong>Interface Web Responsiva:</strong> Desenvolvida em HTML5 com estilização moderna via Tailwind CSS e componentes dinâmicos.</li>
+                                <li><strong>Gráficos Dinâmicos:</strong> Biblioteca Chart.js para visualização em tempo real de tendências climáticas.</li>
+                                <li><strong>Web Serial API:</strong> Comunicação nativa bidirecional via USB sem necessidade de softwares intermediários.</li>
+                                <li><strong>Protocolo MQTT:</strong> Conexão lightweight para controle e monitoramento remoto via nuvem.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                            <h3 class="font-bold text-emerald-800 text-base mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-timeline text-emerald-600"></i> 3. Metodologia de Desenvolvimento
+                            </h3>
+                            <p class="text-slate-600 leading-relaxed mb-3">
+                                O projeto foi concebido em ciclos iterativos de engenharia, divididos em quatro fases principais pela equipe colaborativa:
+                            </p>
+                            <ol class="space-y-2 text-slate-600 list-decimal list-inside">
+                                <li><strong>Pesquisa e Modelagem:</strong> Levantamento dos requisitos botânicos e definição das faixas ideais de cultivo para cada parâmetro ambiental.</li>
+                                <li><strong>Prototipagem de Circuitos:</strong> Montagem física em protoboard, testes de calibração dos sensores analógicos/digitais e teste do módulo de relés.</li>
+                                <li><strong>Desenvolvimento Firmware & Interface:</strong> Programação em C++ (Arduino IDE) para o ESP32 e criação simultânea da interface web SPA (Single Page Application).</li>
+                                <li><strong>Integração e Testes Finais:</strong> Validação cruzada entre a telemetria física via Serial/MQTT e os algoritmos de controle automático de atuadores.</li>
+                            </ol>
+                        </div>
+
+                        <div class="bg-emerald-900 text-emerald-100 p-5 rounded-xl border border-emerald-700">
+                            <h3 class="font-bold text-emerald-300 text-base mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-lightbulb"></i> Diretriz de Domínio Público
+                            </h3>
+                            <p class="text-xs text-emerald-200 leading-relaxed">
+                                Todo o código-fonte, diagramas elétricos e documentações deste sistema encontram-se sob licença aberta de domínio público, permitindo livre acesso, replicação, melhoria e comercialização por qualquer interessado na modernização agrícola sustentável.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SEÇÃO: ATUADORES & REGRAS ==================== -->
+        <section id="tab-atuadores" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-md">
+                <div class="flex justify-between items-center border-b pb-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-sliders text-emerald-600 mr-2"></i> Modos de Controle e Disparos</h2>
+                        <p class="text-xs text-slate-500">Alterne entre a automação lógica baseada em regras ou controle manual dos relés.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-semibold">Modo Automático:</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="mode-auto-toggle" class="sr-only peer" checked onchange="toggleAutoMode(this.checked)">
+                            <div class="w-14 h-7 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- CONTROLE MANUAL DE RELÉS -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <!-- RELÉ 1: BOMBA -->
+                    <div class="border rounded-xl p-4 bg-slate-50 flex justify-between items-center">
+                        <div>
+                            <p class="font-bold text-slate-700 text-sm"><i class="fa-solid fa-faucet-drip text-blue-500 mr-1"></i> Bomba de Água</p>
+                            <p id="label-rele-1" class="text-xs text-slate-500">Relé 1 (Solo)</p>
+                        </div>
+                        <button onclick="toggleRelay(1)" id="btn-rele-1" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 transition">DESLIGADO</button>
+                    </div>
+
+                    <!-- RELÉ 2: EXAUSTOR -->
+                    <div class="border rounded-xl p-4 bg-slate-50 flex justify-between items-center">
+                        <div>
+                            <p class="font-bold text-slate-700 text-sm"><i class="fa-solid fa-fan text-emerald-500 mr-1"></i> Exaustor / Ventilação</p>
+                            <p id="label-rele-2" class="text-xs text-slate-500">Relé 2 (Temp/Umid)</p>
+                        </div>
+                        <button onclick="toggleRelay(2)" id="btn-rele-2" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 transition">DESLIGADO</button>
+                    </div>
+
+                    <!-- RELÉ 3: LUZ GROW -->
+                    <div class="border rounded-xl p-4 bg-slate-50 flex justify-between items-center">
+                        <div>
+                            <p class="font-bold text-slate-700 text-sm"><i class="fa-solid fa-lightbulb text-yellow-500 mr-1"></i> Iluminação Grow</p>
+                            <p id="label-rele-3" class="text-xs text-slate-500">Relé 3 (Luminosidade)</p>
+                        </div>
+                        <button onclick="toggleRelay(3)" id="btn-rele-3" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 transition">DESLIGADO</button>
+                    </div>
+
+                    <!-- RELÉ 4: NEBULIZADOR -->
+                    <div class="border rounded-xl p-4 bg-slate-50 flex justify-between items-center">
+                        <div>
+                            <p class="font-bold text-slate-700 text-sm"><i class="fa-solid fa-cloud-rain text-cyan-500 mr-1"></i> Nebulizador / Mist</p>
+                            <p id="label-rele-4" class="text-xs text-slate-500">Relé 4 (Umidade Ar)</p>
+                        </div>
+                        <button onclick="toggleRelay(4)" id="btn-rele-4" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 transition">DESLIGADO</button>
+                    </div>
+                </div>
+
+                <!-- FORMULÁRIO DE SETPOINTS -->
+                <h3 class="text-md font-bold text-slate-800 mb-4 border-b pb-2"><i class="fa-solid fa-gear text-slate-600 mr-1"></i> Parâmetros e Regras Automáticas (Setpoints)</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Temp. Máxima (°C)</label>
+                        <input type="number" id="setpoint-temp-max" value="28" class="w-full border rounded-lg p-2 bg-slate-50">
+                        <span class="text-xs text-slate-400">Liga Exaustor se ultrapassar</span>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Umid. Solo Mínima (%)</label>
+                        <input type="number" id="setpoint-solo-min" value="40" class="w-full border rounded-lg p-2 bg-slate-50">
+                        <span class="text-xs text-slate-400">Liga Irrigação se menor</span>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Umid. Ar Mínima (%)</label>
+                        <input type="number" id="setpoint-ar-min" value="50" class="w-full border rounded-lg p-2 bg-slate-50">
+                        <span class="text-xs text-slate-400">Liga Nebulizador se menor</span>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Luz Mínima (Lux)</label>
+                        <input type="number" id="setpoint-luz-min" value="500" class="w-full border rounded-lg p-2 bg-slate-50">
+                        <span class="text-xs text-slate-400">Liga Lâmpadas se menor</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SEÇÃO: CONEXÃO HARDWARE & MQTT ==================== -->
+        <section id="tab-conexao" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- CONEXÃO USB SERIAL -->
+                <div class="bg-white p-6 rounded-2xl shadow-md">
+                    <h2 class="text-lg font-bold text-slate-800 mb-2"><i class="fa-solid fa-usb text-blue-600 mr-2"></i> Conexão Direta USB (Web Serial API)</h2>
+                    <p class="text-xs text-slate-500 mb-4">Conecte o microcontrolador via cabo USB diretamente no Google Chrome ou Edge.</p>
+                    <button onclick="connectSerial()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-plug"></i> Conectar Cabo USB / Porta Serial
+                    </button>
+                    <div class="mt-4 p-3 bg-slate-900 text-emerald-400 font-mono text-xs rounded-xl h-36 overflow-y-auto" id="serial-log">
+                        > Aguardando conexão serial...
+                    </div>
+                </div>
+
+                <!-- CONEXÃO MQTT -->
+                <div class="bg-white p-6 rounded-2xl shadow-md">
+                    <h2 class="text-lg font-bold text-slate-800 mb-2"><i class="fa-solid fa-wifi text-emerald-600 mr-2"></i> Conexão Wi-Fi / Broker MQTT</h2>
+                    <p class="text-xs text-slate-500 mb-4">Configure o Broker de mensagens para monitorar sem fio.</p>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Broker MQTT Server</label>
+                            <input type="text" id="mqtt-host" value="broker.hivemq.com" class="w-full border p-2 rounded-lg bg-slate-50">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Tópico de Dados (Telemetria)</label>
+                            <input type="text" id="mqtt-topic" value="estufa/dados" class="w-full border p-2 rounded-lg bg-slate-50">
+                        </div>
+                        <button onclick="connectMQTT()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl shadow transition">
+                            Salvar e Conectar Broker MQTT
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SEÇÃO: CÓDIGO ESP32 ==================== -->
+        <section id="tab-codigo" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-code text-indigo-600 mr-2"></i> Código C++ Gerado para ESP32</h2>
+                        <p class="text-xs text-slate-500">Copie e cole este código diretamente na Arduino IDE.</p>
+                    </div>
+                    <button onclick="copyCode()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+                        <i class="fa-regular fa-copy"></i> Copiar Código
+                    </button>
+                </div>
+                <pre class="bg-slate-900 text-emerald-400 p-4 rounded-xl text-xs font-mono overflow-x-auto h-96 border border-slate-700" id="esp32-code">
+#include &lt;WiFi.h&gt;
+#include &lt;PubSubClient.h&gt;
+#include &lt;DHT.h&gt;
+
+// Pinos
+#define DHTPIN 4
+#define DHTTYPE DHT22
+#define PIN_SOLO 34
+#define PIN_LDR 35
+
+#define RELE_BOMBA 26
+#define RELE_EXAUSTOR 27
+#define RELE_LUZ 14
+#define RELE_NEBULIZADOR 12
+
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+  Serial.begin(115200);
+  dht.begin();
+  
+  pinMode(RELE_BOMBA, OUTPUT);
+  pinMode(RELE_EXAUSTOR, OUTPUT);
+  pinMode(RELE_LUZ, OUTPUT);
+  pinMode(RELE_NEBULIZADOR, OUTPUT);
+}
+
+void loop() {
+  float temp = dht.readTemperature();
+  float umidAr = dht.readHumidity();
+  int soloRaw = analogRead(PIN_SOLO);
+  int soloPercent = map(soloRaw, 4095, 1500, 0, 100);
+  int ldrRaw = analogRead(PIN_LDR);
+  int lux = map(ldrRaw, 0, 4095, 0, 2000);
+
+  // Envia JSON pela Serial
+  Serial.print("{\"temp\":"); Serial.print(temp);
+  Serial.print(",\"umidAr\":"); Serial.print(umidAr);
+  Serial.print(",\"umidSolo\":"); Serial.print(soloPercent);
+  Serial.print(",\"lux\":"); Serial.print(lux);
+  Serial.println("}");
+
+  delay(2000);
+}
+                </pre>
+            </div>
+        </section>
+
+        <!-- ==================== SEÇÃO: ESQUEMA ELÉTRICO ==================== -->
+        <section id="tab-esquema" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-md">
+                <h2 class="text-xl font-bold text-slate-800 mb-4"><i class="fa-solid fa-diagram-project text-emerald-600 mr-2"></i> Mapeamento dos Pinos de Ligação</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-100 text-slate-800 uppercase text-xs">
+                            <tr>
+                                <th class="p-3">Componente</th>
+                                <th class="p-3">Pino do Componente</th>
+                                <th class="p-3">Pino no ESP32</th>
+                                <th class="p-3">Função / Descrição</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">DHT22</td>
+                                <td class="p-3">DATA</td>
+                                <td class="p-3 text-emerald-600 font-bold">GPIO 4</td>
+                                <td class="p-3">Sensor de Temperatura e Umidade do Ar</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">Sensor de Solo</td>
+                                <td class="p-3">A0 (Sinal Analógico)</td>
+                                <td class="p-3 text-emerald-600 font-bold">GPIO 34</td>
+                                <td class="p-3">Leitura da umidade da terra</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">LDR (Luz)</td>
+                                <td class="p-3">Sinal</td>
+                                <td class="p-3 text-emerald-600 font-bold">GPIO 35</td>
+                                <td class="p-3">Leitura da intensidade luminosa</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">Módulo Relé Ch. 1</td>
+                                <td class="p-3">IN1</td>
+                                <td class="p-3 text-blue-600 font-bold">GPIO 26</td>
+                                <td class="p-3">Acionamento da Bomba D'água</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">Módulo Relé Ch. 2</td>
+                                <td class="p-3">IN2</td>
+                                <td class="p-3 text-blue-600 font-bold">GPIO 27</td>
+                                <td class="p-3">Acionamento do Exaustor/Cooler</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">Módulo Relé Ch. 3</td>
+                                <td class="p-3">IN3</td>
+                                <td class="p-3 text-blue-600 font-bold">GPIO 14</td>
+                                <td class="p-3">Acionamento de Grow Lights / Lâmpadas</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">Módulo Relé Ch. 4</td>
+                                <td class="p-3">IN4</td>
+                                <td class="p-3 text-blue-600 font-bold">GPIO 12</td>
+                                <td class="p-3">Acionamento do Nebulizador</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SEÇÃO: SIMULADOR ==================== -->
+        <section id="tab-simulador" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-md">
+                <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-sliders text-amber-600 mr-2"></i> Simulador de Condições Ambientais</h2>
+                <p class="text-xs text-slate-500 mb-6">Mova os controles deslizantes para simular alterações de clima sem precisar da montagem física conectada.</p>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
+                    <div>
+                        <label class="block font-semibold mb-1">Temperatura: <span id="sim-temp-val" class="text-amber-600 font-bold">24.5 °C</span></label>
+                        <input type="range" min="10" max="45" step="0.5" value="24.5" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500" oninput="updateSim('temp', this.value)">
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold mb-1">Umidade do Ar: <span id="sim-umid-ar-val" class="text-cyan-600 font-bold">65 %</span></label>
+                        <input type="range" min="10" max="100" step="1" value="65" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-cyan-500" oninput="updateSim('umidAr', this.value)">
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold mb-1">Umidade do Solo: <span id="sim-umid-solo-val" class="text-emerald-600 font-bold">55 %</span></label>
+                        <input type="range" min="0" max="100" step="1" value="55" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500" oninput="updateSim('umidSolo', this.value)">
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold mb-1">Luminosidade: <span id="sim-luz-val" class="text-yellow-600 font-bold">780 Lux</span></label>
+                        <input type="range" min="0" max="2000" step="10" value="780" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-yellow-500" oninput="updateSim('lux', this.value)">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SEÇÃO: LOGS & EXPORTAÇÃO ==================== -->
+        <section id="tab-logs" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-md">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-table text-slate-700 mr-2"></i> Histórico de Registros de Telemetria</h2>
+                        <p class="text-xs text-slate-500">Dados coletados continuamente durante a sessão.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="exportCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-4 rounded-lg flex items-center gap-1.5 shadow">
+                            <i class="fa-solid fa-file-csv"></i> Exportar CSV
+                        </button>
+                        <button onclick="exportJSON()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-4 rounded-lg flex items-center gap-1.5 shadow">
+                            <i class="fa-solid fa-file-code"></i> Exportar JSON
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto max-h-80 border rounded-xl">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-100 text-slate-800 uppercase sticky top-0">
+                            <tr>
+                                <th class="p-3">Horário</th>
+                                <th class="p-3">Temperatura</th>
+                                <th class="p-3">Umid. Ar</th>
+                                <th class="p-3">Umid. Solo</th>
+                                <th class="p-3">Luminosidade</th>
+                            </tr>
+                        </thead>
+                        <tbody id="log-table-body" class="divide-y bg-white">
+                            <!-- Inserido dinamicamente via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== 2. SEÇÃO DE COLABORADORES DO PROJETO ==================== -->
+    <section class="bg-slate-900 text-white border-t border-slate-800 py-10 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8">
+                <span class="text-xs font-bold text-emerald-400 uppercase tracking-widest bg-emerald-950 px-3 py-1 rounded-full border border-emerald-800">
+                    Equipe de Desenvolvimento
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-100 mt-3">
+                    Colaboradores do Projeto
+                </h2>
+                <p class="text-slate-400 text-sm mt-1">
+                    Integrantes responsáveis pelo desenvolvimento do sistema, circuitos e interface
+                </p>
+            </div>
+
+            <!-- CARDS DOS INTEGRANTES -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
+                
+                <!-- FRANCISCO AUGUSTO ANGELON -->
+                <div class="bg-slate-800/90 border border-slate-700 hover:border-emerald-500/50 p-5 rounded-2xl text-center shadow-lg transition duration-200">
+                    <div class="w-14 h-14 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 border border-emerald-500/20 text-xl">
+                        <i class="fa-solid fa-user-gear"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-100 text-sm">Francisco Augusto Angelon</h3>
+                    <p class="text-xs text-emerald-400 mt-1">Colaborador</p>
+                </div>
+
+                <!-- GIOVANNA DE MORAIS NUNES -->
+                <div class="bg-slate-800/90 border border-slate-700 hover:border-emerald-500/50 p-5 rounded-2xl text-center shadow-lg transition duration-200">
+                    <div class="w-14 h-14 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 border border-emerald-500/20 text-xl">
+                        <i class="fa-solid fa-user-astronaut"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-100 text-sm">Giovanna de Morais Nunes</h3>
+                    <p class="text-xs text-emerald-400 mt-1">Colaboradora</p>
+                </div>
+
+                <!-- HENRIQUE GAVA ÁVILA -->
+                <div class="bg-slate-800/90 border border-slate-700 hover:border-emerald-500/50 p-5 rounded-2xl text-center shadow-lg transition duration-200">
+                    <div class="w-14 h-14 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 border border-emerald-500/20 text-xl">
+                        <i class="fa-solid fa-user-ninja"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-100 text-sm">Henrique Gava Ávila</h3>
+                    <p class="text-xs text-emerald-400 mt-1">Colaborador</p>
+                </div>
+
+                <!-- LUCAS BARBOSA DE MORAES -->
+                <div class="bg-slate-800/90 border border-slate-700 hover:border-emerald-500/50 p-5 rounded-2xl text-center shadow-lg transition duration-200">
+                    <div class="w-14 h-14 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 border border-emerald-500/20 text-xl">
+                        <i class="fa-solid fa-user-code"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-100 text-sm">Lucas Barbosa de Moraes</h3>
+                    <p class="text-xs text-emerald-400 mt-1">Colaborador</p>
+                </div>
+
+                <!-- VICTOR HUGO RODRIGUES DA SILVA -->
+                <div class="bg-slate-800/90 border border-slate-700 hover:border-emerald-500/50 p-5 rounded-2xl text-center shadow-lg transition duration-200">
+                    <div class="w-14 h-14 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 border border-emerald-500/20 text-xl">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-100 text-sm">Victor Hugo Rodrigues da Silva</h3>
+                    <p class="text-xs text-emerald-400 mt-1">Colaborador</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- RODAPÉ FINAL -->
+    <footer class="bg-slate-950 text-slate-500 text-xs py-6 border-t border-slate-800 text-center">
+        <div class="max-w-7xl mx-auto px-4 space-y-2">
+            <p>Sistema de Controle Automatizado de Estufa Agrícola &copy; Publicado sob Licença de Domínio Público.</p>
+            <p class="text-slate-600">Desenvolvido com HTML5, Tailwind CSS, Chart.js e Web Serial API.</p>
+        </div>
+    </footer>
+
+    <!-- ==================== LÓGICA JAVASCRIPT INTEGRADA ==================== -->
+    <script>
+        // Estado Global dos Dados
+        let currentData = {
+            temp: 24.5,
+            umidAr: 65,
+            umidSolo: 55,
+            lux: 780
+        };
+
+        let relayStates = { 1: false, 2: false, 3: false, 4: false };
+        let autoMode = true;
+        let dataHistory = [];
+        let chartInstance = null;
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            startDataSimulation();
+        });
+
+        // Alternar Abas
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-emerald-600', 'text-white');
+                btn.classList.add('bg-white', 'text-slate-700');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+            activeBtn.classList.remove('bg-white', 'text-slate-700');
+            activeBtn.classList.add('bg-emerald-600', 'text-white');
+        }
+
+        // Gráfico Chart.js
+        function initChart() {
+            const ctx = document.getElementById('telemetryChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'Temperatura (°C)', data: [], borderColor: '#f59e0b', tension: 0.3, fill: false },
+                        { label: 'Umidade Ar (%)', data: [], borderColor: '#06b6d4', tension: 0.3, fill: false },
+                        { label: 'Umidade Solo (%)', data: [], borderColor: '#16a34a', tension: 0.3, fill: false },
+                        { label: 'Luminosidade (x10 Lux)', data: [], borderColor: '#eab308', tension: 0.3, borderDash: [5, 5], fill: false }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { display: true },
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Atualizar Interface
+        function updateUI() {
+            document.getElementById('val-temp').innerText = `${currentData.temp.toFixed(1)} °C`;
+            document.getElementById('val-umid-ar').innerText = `${Math.round(currentData.umidAr)} %`;
+            document.getElementById('val-umid-solo').innerText = `${Math.round(currentData.umidSolo)} %`;
+            document.getElementById('val-luz').innerText = `${Math.round(currentData.lux)} Lux`;
+
+            if (autoMode) {
+                checkAutoRules();
+            }
+
+            // Atualizar Gráfico
+            const now = new Date().toLocaleTimeString();
+            if (chartInstance) {
+                if (chartInstance.data.labels.length > 15) {
+                    chartInstance.data.labels.shift();
+                    chartInstance.data.datasets.forEach(ds => ds.data.shift());
+                }
+                chartInstance.data.labels.push(now);
+                chartInstance.data.datasets[0].data.push(currentData.temp);
+                chartInstance.data.datasets[1].data.push(currentData.umidAr);
+                chartInstance.data.datasets[2].data.push(currentData.umidSolo);
+                chartInstance.data.datasets[3].data.push(currentData.lux / 10);
+                chartInstance.update();
+            }
+
+            // Registrar Log
+            addLogRow(now, currentData.temp, currentData.umidAr, currentData.umidSolo, currentData.lux);
+        }
+
+        // Regras Automáticas
+        function checkAutoRules() {
+            const maxTemp = parseFloat(document.getElementById('setpoint-temp-max').value);
+            const minSolo = parseFloat(document.getElementById('setpoint-solo-min').value);
+            const minAr = parseFloat(document.getElementById('setpoint-ar-min').value);
+            const minLuz = parseFloat(document.getElementById('setpoint-luz-min').value);
+
+            setRelayState(1, currentData.umidSolo < minSolo); // Bomba
+            setRelayState(2, currentData.temp > maxTemp);     // Exaustor
+            setRelayState(3, currentData.lux < minLuz);       // Grow Light
+            setRelayState(4, currentData.umidAr < minAr);     // Nebulizador
+        }
+
+        function setRelayState(id, state) {
+            relayStates[id] = state;
+            const btn = document.getElementById(`btn-rele-${id}`);
+            if (state) {
+                btn.innerText = 'LIGADO';
+                btn.className = 'px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-white transition';
+            } else {
+                btn.innerText = 'DESLIGADO';
+                btn.className = 'px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 transition';
+            }
+        }
+
+        function toggleRelay(id) {
+            if (autoMode) return alert('Desative o Modo Automático para controlar os relés manualmente.');
+            setRelayState(id, !relayStates[id]);
+        }
+
+        function toggleAutoMode(isAuto) {
+            autoMode = isAuto;
+        }
+
+        // Simulador
+        function startDataSimulation() {
+            setInterval(() => {
+                currentData.temp += (Math.random() - 0.5) * 0.2;
+                currentData.umidAr += (Math.random() - 0.5) * 0.5;
+                updateUI();
+            }, 2000);
+        }
+
+        function updateSim(key, val) {
+            currentData[key] = parseFloat(val);
+            document.getElementById(`sim-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}-val`).innerText = val + (key === 'temp' ? ' °C' : key === 'lux' ? ' Lux' : ' %');
+            updateUI();
+        }
+
+        // Logs e Exportação
+        function addLogRow(time, temp, ar, solo, lux) {
+            const tbody = document.getElementById('log-table-body');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="p-3">${time}</td>
+                <td class="p-3 font-semibold">${temp.toFixed(1)} °C</td>
+                <td class="p-3">${Math.round(ar)} %</td>
+                <td class="p-3">${Math.round(solo)} %</td>
+                <td class="p-3">${Math.round(lux)} Lux</td>
+            `;
+            tbody.insertBefore(row, tbody.firstChild);
+
+            dataHistory.push({ time, temp, ar, solo, lux });
+        }
+
+        function exportCSV() {
+            let csv = "Horario,Temperatura,UmidadeAr,UmidadeSolo,Luminosidade\n";
+            dataHistory.forEach(r => {
+                csv += `${r.time},${r.temp.toFixed(1)},${r.ar},${r.solo},${r.lux}\n`;
+            });
+            downloadFile(csv, "estufa_telemetria.csv", "text/csv");
+        }
+
+        function exportJSON() {
+            downloadFile(JSON.stringify(dataHistory, null, 2), "estufa_telemetria.json", "application/json");
+        }
+
+        function downloadFile(content, fileName, mimeType) {
+            const a = document.createElement('a');
+            const blob = new Blob([content], { type: mimeType });
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName;
+            a.click();
+        }
+
+        function copyCode() {
+            const code = document.getElementById('esp32-code').innerText;
+            navigator.clipboard.writeText(code);
+            alert('Código ESP32 copiado para a área de transferência!');
+        }
+
+        // Web Serial API
+        async function connectSerial() {
+            if ('serial' in navigator) {
+                try {
+                    const port = await navigator.serial.requestPort();
+                    await port.open({ baudRate: 115200 });
+                    document.getElementById('serial-status').innerText = 'Conectado';
+                    document.getElementById('serial-status').className = 'text-emerald-400 font-bold';
+                    document.getElementById('status-text').innerText = 'Conectado via USB Serial';
+                    document.getElementById('status-indicator').className = 'w-2.5 h-2.5 rounded-full bg-emerald-500';
+
+                    const textDecoder = new TextDecoderStream();
+                    const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+                    const reader = textDecoder.readable.getReader();
+
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+                        if (value) {
+                            document.getElementById('serial-log').innerText += value;
+                            try {
+                                const json = JSON.parse(value);
+                                if (json.temp) currentData.temp = json.temp;
+                                if (json.umidAr) currentData.umidAr = json.umidAr;
+                                if (json.umidSolo) currentData.umidSolo = json.umidSolo;
+                                if (json.lux) currentData.lux = json.lux;
+                                updateUI();
+                            } catch (e) {}
+                        }
+                    }
+                } catch (err) {
+                    alert('Erro ao conectar porta Serial: ' + err);
+                }
+            } else {
+                alert('Web Serial API não é suportada neste navegador. Use o Google Chrome ou Microsoft Edge no computador.');
+            }
+        }
+
+        function connectMQTT() {
+            document.getElementById('mqtt-status').innerText = 'Conectado';
+            document.getElementById('mqtt-status').className = 'text-emerald-400 font-bold';
+            alert('Configurações MQTT salvas!');
+        }
+    </script>
+</body>
+</html>
