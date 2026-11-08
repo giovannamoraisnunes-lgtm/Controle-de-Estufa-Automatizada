@@ -50,7 +50,7 @@
                     Controle Automatizado de Estufa
                 </h1>
                 <p class="text-lg text-emerald-200/90 font-light leading-relaxed mb-6">
-                    Sistema Integrado de Monitoramento, Climatização e Automação de Microclimas com Nuvem Firebase
+                    Sistema Inteligente de Monitoramento e Automação de Microclimas para Cultivo de Suculentas
                 </p>
             </div>
 
@@ -62,10 +62,10 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm mb-6">
                     <div>
                         <h3 class="font-semibold text-emerald-300 mb-2 text-base flex items-center gap-2">
-                            <i class="fa-solid fa-circle-dot text-xs text-emerald-400"></i> Objetivo Geral
+                            <i class="fa-solid fa-circle-dot text-xs text-emerald-400"></i> Objetivo Geral e Botânico
                         </h3>
                         <p class="text-slate-300 leading-relaxed">
-                            Desenvolver uma solução acessível de automação agrícola e botânica, unindo interface web interativa em tempo real (via Firebase Realtime Database) a um sistema de controle físico microcontrolado (ESP32) para garantir o desenvolvimento ideal de cultivos.
+                            Desenvolver uma solução autônoma baseada em ESP32 para gerenciamento térmico, hídrico e lumínico voltada à otimização do cultivo de suculentas. O sistema integra sensores de alta precisão, controle preventivo de nível de reservatório via boia e sincronização em nuvem via Firebase.
                         </p>
                     </div>
                     <div>
@@ -91,17 +91,17 @@
             <div class="flex items-center space-x-3">
                 <span class="flex items-center gap-1.5 font-medium">
                     <span id="status-indicator" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-                    <span id="status-text">Hardware Não Conectado (Modo Simulação)</span>
+                    <span id="status-text">Aguardando Conexão Firebase (Modo Simulação Ativo)</span>
                 </span>
             </div>
             <div class="flex items-center space-x-4">
                 <span><i class="fa-solid fa-cloud text-orange-400 mr-1"></i> Firebase: <span id="firebase-status" class="text-slate-400">Desconectado</span></span>
-                <span><i class="fa-solid fa-usb text-blue-400 mr-1"></i> Serial: <span id="serial-status" class="text-slate-400">Off</span></span>
+                <span><i class="fa-solid fa-water text-cyan-400 mr-1"></i> Reservatório: <span id="status-boia" class="text-slate-400">--</span></span>
             </div>
         </div>
     </div>
 
-    <!-- CONTEÚDO PRINCIPAL (PAINEL DE NAVEGAÇÃO E DASHBOARD) -->
+    <!-- CONTEÚDO PRINCIPAL -->
     <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 flex-grow w-full">
 
         <!-- ABAS DE NAVEGAÇÃO -->
@@ -116,13 +116,13 @@
                 <i class="fa-solid fa-toggle-on"></i> Atuadores & Regras
             </button>
             <button onclick="switchTab('conexao')" id="tab-btn-conexao" class="tab-btn bg-white text-slate-700 hover:bg-slate-200 px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-network-wired"></i> Conexão Hardware & Firebase
+                <i class="fa-solid fa-network-wired"></i> Conexão Firebase
             </button>
             <button onclick="switchTab('codigo')" id="tab-btn-codigo" class="tab-btn bg-white text-slate-700 hover:bg-slate-200 px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-code"></i> Código ESP32
+                <i class="fa-solid fa-code"></i> Código ESP32 (C++)
             </button>
             <button onclick="switchTab('esquema')" id="tab-btn-esquema" class="tab-btn bg-white text-slate-700 hover:bg-slate-200 px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-microchip"></i> Esquema Elétrico
+                <i class="fa-solid fa-microchip"></i> Esquema Elétrico & Pinos
             </button>
             <button onclick="switchTab('simulador')" id="tab-btn-simulador" class="tab-btn bg-white text-slate-700 hover:bg-slate-200 px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 whitespace-nowrap">
                 <i class="fa-solid fa-sliders"></i> Simulador
@@ -134,13 +134,12 @@
 
         <!-- ==================== SEÇÃO: DASHBOARD ==================== -->
         <section id="tab-dashboard" class="tab-content space-y-6">
-            <!-- CARDS DE LEITURAS EM TEMPO REAL -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- TEMPERATURA -->
                 <div class="bg-white rounded-2xl p-6 shadow-md border-l-4 border-amber-500">
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Temperatura do Ar</p>
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Temperatura do Ar (DHT11)</p>
                             <h3 id="temperatura" class="text-3xl font-extrabold text-slate-800 mt-2">24.5 °C</h3>
                         </div>
                         <div class="p-3 bg-amber-100 text-amber-600 rounded-xl">
@@ -148,8 +147,8 @@
                         </div>
                     </div>
                     <div class="mt-4 flex items-center justify-between text-xs text-slate-500 border-t pt-3">
-                        <span>Ideal: 20°C - 28°C</span>
-                        <span id="status-temp" class="px-2 py-0.5 rounded font-semibold bg-emerald-100 text-emerald-800">Normal</span>
+                        <span>Limite máx: 32.0°C</span>
+                        <span id="status-temp" class="px-2 py-0.5 rounded font-semibold bg-emerald-100 text-emerald-800">Ideal</span>
                     </div>
                 </div>
 
@@ -157,7 +156,7 @@
                 <div class="bg-white rounded-2xl p-6 shadow-md border-l-4 border-cyan-500">
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Umidade do Ar</p>
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Umidade do Ar (DHT11)</p>
                             <h3 id="umidade" class="text-3xl font-extrabold text-slate-800 mt-2">65 %</h3>
                         </div>
                         <div class="p-3 bg-cyan-100 text-cyan-600 rounded-xl">
@@ -165,8 +164,8 @@
                         </div>
                     </div>
                     <div class="mt-4 flex items-center justify-between text-xs text-slate-500 border-t pt-3">
-                        <span>Ideal: 50% - 80%</span>
-                        <span id="status-umid-ar" class="px-2 py-0.5 rounded font-semibold bg-emerald-100 text-emerald-800">Normal</span>
+                        <span>Limite máx: 70%</span>
+                        <span id="status-umid-ar" class="px-2 py-0.5 rounded font-semibold bg-emerald-100 text-emerald-800">Ideal</span>
                     </div>
                 </div>
 
@@ -174,7 +173,7 @@
                 <div class="bg-white rounded-2xl p-6 shadow-md border-l-4 border-emerald-600">
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Umidade do Solo</p>
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Umidade do Solo (Capacitivo)</p>
                             <h3 id="val-umid-solo" class="text-3xl font-extrabold text-slate-800 mt-2">55 %</h3>
                         </div>
                         <div class="p-3 bg-emerald-100 text-emerald-700 rounded-xl">
@@ -182,8 +181,8 @@
                         </div>
                     </div>
                     <div class="mt-4 flex items-center justify-between text-xs text-slate-500 border-t pt-3">
-                        <span>Min: 40%</span>
-                        <span id="status-umid-solo" class="px-2 py-0.5 rounded font-semibold bg-emerald-100 text-emerald-800">Úmido</span>
+                        <span>Faixa: 20% a 60%</span>
+                        <span id="status-umid-solo" class="px-2 py-0.5 rounded font-semibold bg-emerald-100 text-emerald-800">Adequado</span>
                     </div>
                 </div>
 
@@ -191,15 +190,15 @@
                 <div class="bg-white rounded-2xl p-6 shadow-md border-l-4 border-yellow-500">
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Luminosidade</p>
-                            <h3 id="val-luz" class="text-3xl font-extrabold text-slate-800 mt-2">780 Lux</h3>
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Luminosidade (LDR)</p>
+                            <h3 id="val-luz" class="text-3xl font-extrabold text-slate-800 mt-2">2100</h3>
                         </div>
                         <div class="p-3 bg-yellow-100 text-yellow-600 rounded-xl">
                             <i class="fa-solid fa-sun text-2xl"></i>
                         </div>
                     </div>
                     <div class="mt-4 flex items-center justify-between text-xs text-slate-500 border-t pt-3">
-                        <span>Min: 500 Lux</span>
+                        <span>Alvo LED: &lt; 1800</span>
                         <span id="status-luz" class="px-2 py-0.5 rounded font-semibold bg-emerald-100 text-emerald-800">Adequada</span>
                     </div>
                 </div>
@@ -209,7 +208,7 @@
             <div class="bg-white p-6 rounded-2xl shadow-md">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
                     <h2 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-chart-area text-emerald-600 mr-2"></i> Monitoramento do Microclima em Tempo Real</h2>
-                    <span class="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Atualizado via Firebase / Simulação</span>
+                    <span class="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Sincronizado via Firebase Realtime Database</span>
                 </div>
                 <div class="relative h-72 sm:h-80 w-full">
                     <canvas id="telemetryChart"></canvas>
@@ -221,31 +220,35 @@
         <section id="tab-especificacoes" class="tab-content hidden space-y-6">
             <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-md space-y-6">
                 <div class="border-b pb-4">
-                    <h2 class="text-2xl font-extrabold text-slate-800"><i class="fa-solid fa-book-open text-emerald-600 mr-2"></i> Especificações e Desenvolvimento do Projeto</h2>
-                    <p class="text-sm text-slate-500 mt-1">Detalhamento técnico, arquitetura de hardware, software em nuvem Firebase e etapas de engenharia.</p>
+                    <h2 class="text-2xl font-extrabold text-slate-800"><i class="fa-solid fa-book-open text-emerald-600 mr-2"></i> Especificações e Detalhes de Desenvolvimento</h2>
+                    <p class="text-sm text-slate-500 mt-1">Fundamentação técnica, lógica de controle para suculentas e arquitetura de hardware implementada no ESP32.</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                     <div class="space-y-4">
                         <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
                             <h3 class="font-bold text-emerald-800 text-base mb-2 flex items-center gap-2">
-                                <i class="fa-solid fa-microchip text-emerald-600"></i> 1. Especificações de Hardware
+                                <i class="fa-solid fa-seedling text-emerald-600"></i> 1. Requisitos Botânicos (Suculentas)
                             </h3>
-                            <ul class="space-y-2 text-slate-600 list-disc list-inside">
-                                <li><strong>Microcontrolador ESP32:</strong> Núcleo Tensilica Dual-Core com Wi-Fi para envio de dados ao Firebase Realtime Database.</li>
-                                <li><strong>Sensor DHT22:</strong> Alta precisão na medição de temperatura e umidade relativa do ar.</li>
-                                <li><strong>Sensor de Solo e LDR:</strong> Monitoramento de umidade da terra e luxes luminosos.</li>
-                                <li><strong>Módulo Relé de 4 Canais:</strong> Acionamento de bomba, exaustor, luz Grow e nebulizador.</li>
+                            <p class="text-slate-600 leading-relaxed mb-2">
+                                O projeto foi dimensionado especificamente para as exigências fisiológicas de suculentas, que necessitam de solos bem drenados e evitam umidade excessiva nas raízes:
+                            </p>
+                            <ul class="space-y-1.5 text-slate-600 list-disc list-inside">
+                                <li><strong>Solo Seco (&lt; 20%):</strong> Dispara o acionamento da bomba d'água (`in3`), condicionado estritamente à verificação da boia de nível.</li>
+                                <li><strong>Solo Muito Úmido (&gt; 60%):</strong> Risco de apodrecimento. Desliga a irrigação e aciona a ventoinha (`in1`) para aeração.</li>
+                                <li><strong>Temperatura/Umidade do Ar:</strong> Caso ultrapasse 32°C ou 70% de umidade relativa, o sistema liga preventivamente a ventoinha para resfriamento e troca gasosa.</li>
                             </ul>
                         </div>
 
                         <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
                             <h3 class="font-bold text-emerald-800 text-base mb-2 flex items-center gap-2">
-                                <i class="fa-solid fa-cloud text-orange-500"></i> 2. Arquitetura Firebase Realtime Database
+                                <i class="fa-solid fa-microchip text-emerald-600"></i> 2. Arquitetura de Hardware & Sensores
                             </h3>
                             <ul class="space-y-2 text-slate-600 list-disc list-inside">
-                                <li><strong>Armazenamento em Nuvem:</strong> O ESP32 envia dados JSON em tempo real para o nó `/estufa`.</li>
-                                <li><strong>Sincronização Reativa:</strong> O site consome os dados instantaneamente via SDK web do Firebase (`onValue`).</li>
+                                <li><strong>Sensor DHT11 (GPIO 21):</strong> Monitoramento digital integrado da temperatura e umidade do ar.</li>
+                                <li><strong>Sensor Capacitivo de Solo (GPIO 34):</strong> Leitura analógica com conversão ADC de 12 bits (0 a 4095), mapeada entre o ponto seco (3000) e úmido (1200).</li>
+                                <li><strong>Sensor LDR (GPIO 35):</strong> Monitoramento contínuo da luz ambiente. Valores abaixo de 1800 acionam a fita de LED (`in2`) para suplementação luminosa.</li>
+                                <li><strong>Sensor de Boia (GPIO 4):</strong> Chave de nível com pull-up interno. Impede o funcionamento a seco da bomba de irrigação.</li>
                             </ul>
                         </div>
                     </div>
@@ -253,14 +256,27 @@
                     <div class="space-y-4">
                         <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
                             <h3 class="font-bold text-emerald-800 text-base mb-2 flex items-center gap-2">
-                                <i class="fa-solid fa-timeline text-emerald-600"></i> 3. Metodologia de Desenvolvimento
+                                <i class="fa-solid fa-cloud text-orange-500"></i> 3. Integração com Nuvem (Firebase)
                             </h3>
-                            <ol class="space-y-2 text-slate-600 list-decimal list-inside">
-                                <li><strong>Pesquisa e Modelagem:</strong> Definição das faixas ideais de cultivo.</li>
-                                <li><strong>Prototipagem de Circuitos:</strong> Testes em protoboard com ESP32 e sensores.</li>
-                                <li><strong>Desenvolvimento Firmware & Nuvem:</strong> Programação C++ integrando a biblioteca FirebaseESP32.</li>
-                                <li><strong>Integração Web Final:</strong> Conexão do dashboard com o banco de dados em tempo real.</li>
-                            </ol>
+                            <p class="text-slate-600 leading-relaxed mb-3">
+                                O ESP32 conecta-se à rede Wi-Fi local e utiliza a biblioteca `FirebaseESP32` para persistir dados estruturados em tempo real no banco de dados Firebase Realtime Database sob o caminho raiz `/estufa/`:
+                            </p>
+                            <ul class="space-y-1.5 text-slate-600 list-disc list-inside">
+                                <li><code>/estufa/temperatura</code> (Float)</li>
+                                <li><code>/estufa/umidadeAr</code> (Float)</li>
+                                <li><code>/estufa/umidadeSolo</code> (Int)</li>
+                                <li><code>/estufa/luminosidade</code> (Int)</li>
+                                <li><code>/estufa/reservatorioCheio</code> (Boolean)</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-emerald-900 text-emerald-100 p-5 rounded-xl border border-emerald-700">
+                            <h3 class="font-bold text-emerald-300 text-base mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-shield-halved"></i> Segurança e Sinalização Visual
+                            </h3>
+                            <p class="text-xs text-emerald-200 leading-relaxed">
+                                O sistema possui sinalização física por LEDs (Verde para estado normal/adequado e Vermelho para alertas críticos de temperatura, umidade ou falta de água no reservatório), garantindo confiabilidade operacional autônoma.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -272,104 +288,82 @@
             <div class="bg-white p-6 rounded-2xl shadow-md">
                 <div class="flex justify-between items-center border-b pb-4 mb-6">
                     <div>
-                        <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-sliders text-emerald-600 mr-2"></i> Modos de Controle e Disparos</h2>
-                        <p class="text-xs text-slate-500">Alterne entre a automação lógica baseada em regras ou controle manual dos relés.</p>
+                        <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-sliders text-emerald-600 mr-2"></i> Status dos Atuadores e Regras Físicas</h2>
+                        <p class="text-xs text-slate-500">Visualização do comportamento dos relés acionados pelo ESP32 com base no código embarcado.</p>
                     </div>
                     <div class="flex items-center gap-3">
-                        <span class="text-sm font-semibold">Modo Automático:</span>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="mode-auto-toggle" class="sr-only peer" checked onchange="toggleAutoMode(this.checked)">
-                            <div class="w-14 h-7 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600"></div>
-                        </label>
+                        <span class="text-sm font-semibold">Automação Embarcada:</span>
+                        <span class="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">Ativa (ESP32)</span>
                     </div>
                 </div>
 
-                <!-- CONTROLE MANUAL DE RELÉS -->
+                <!-- ESTADO DOS ATUADORES DO CÓDIGO -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <div class="border rounded-xl p-4 bg-slate-50 flex justify-between items-center">
                         <div>
-                            <p class="font-bold text-slate-700 text-sm"><i class="fa-solid fa-faucet-drip text-blue-500 mr-1"></i> Bomba de Água</p>
-                            <p class="text-xs text-slate-500">Relé 1 (Solo)</p>
+                            <p class="font-bold text-slate-700 text-sm"><i class="fa-solid fa-faucet-drip text-blue-500 mr-1"></i> Bomba d'Água (in3)</p>
+                            <p class="text-xs text-slate-500">Pino GPIO 19</p>
                         </div>
-                        <button onclick="toggleRelay(1)" id="btn-rele-1" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 transition">DESLIGADO</button>
+                        <span id="badge-bomba" class="px-3 py-1 text-xs font-bold rounded-lg bg-slate-200 text-slate-700">DESLIGADO</span>
                     </div>
 
                     <div class="border rounded-xl p-4 bg-slate-50 flex justify-between items-center">
                         <div>
-                            <p class="font-bold text-slate-700 text-sm"><i class="fa-solid fa-fan text-emerald-500 mr-1"></i> Exaustor</p>
-                            <p class="text-xs text-slate-500">Relé 2 (Temp)</p>
+                            <p class="font-bold text-slate-700 text-sm"><i class="fa-solid fa-fan text-emerald-500 mr-1"></i> Ventoinha (in1)</p>
+                            <p class="text-xs text-slate-500">Pino GPIO 5</p>
                         </div>
-                        <button onclick="toggleRelay(2)" id="btn-rele-2" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 transition">DESLIGADO</button>
+                        <span id="badge-ventoinha" class="px-3 py-1 text-xs font-bold rounded-lg bg-slate-200 text-slate-700">DESLIGADO</span>
                     </div>
 
                     <div class="border rounded-xl p-4 bg-slate-50 flex justify-between items-center">
                         <div>
-                            <p class="font-bold text-slate-700 text-sm"><i class="fa-solid fa-lightbulb text-yellow-500 mr-1"></i> Grow Light</p>
-                            <p class="text-xs text-slate-500">Relé 3 (Luz)</p>
+                            <p class="font-bold text-slate-700 text-sm"><i class="fa-solid fa-lightbulb text-yellow-500 mr-1"></i> Fita de LED (in2)</p>
+                            <p class="text-xs text-slate-500">Pino GPIO 18</p>
                         </div>
-                        <button onclick="toggleRelay(3)" id="btn-rele-3" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 transition">DESLIGADO</button>
+                        <span id="badge-luz" class="px-3 py-1 text-xs font-bold rounded-lg bg-slate-200 text-slate-700">DESLIGADO</span>
                     </div>
 
                     <div class="border rounded-xl p-4 bg-slate-50 flex justify-between items-center">
                         <div>
-                            <p class="font-bold text-slate-700 text-sm"><i class="fa-solid fa-cloud-rain text-cyan-500 mr-1"></i> Nebulizador</p>
-                            <p class="text-xs text-slate-500">Relé 4 (Umidade Ar)</p>
+                            <p class="font-bold text-slate-700 text-sm"><i class="fa-solid fa-triangle-exclamation text-red-500 mr-1"></i> LED Alerta / Status</p>
+                            <p class="text-xs text-slate-500">Pinos GPIO 2 e 15</p>
                         </div>
-                        <button onclick="toggleRelay(4)" id="btn-rele-4" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 transition">DESLIGADO</button>
+                        <span id="badge-leds" class="px-3 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800">Verde (Normal)</span>
                     </div>
                 </div>
 
-                <!-- SETPOINTS -->
-                <h3 class="text-md font-bold text-slate-800 mb-4 border-b pb-2"><i class="fa-solid fa-gear text-slate-600 mr-1"></i> Parâmetros e Regras Automáticas</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                    <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Temp. Máxima (°C)</label>
-                        <input type="number" id="setpoint-temp-max" value="28" class="w-full border rounded-lg p-2 bg-slate-50">
+                <!-- REGRAS PROGRAMADAS -->
+                <h3 class="text-md font-bold text-slate-800 mb-4 border-b pb-2"><i class="fa-solid fa-gears text-slate-600 mr-1"></i> Lógica de Acionamento Implementada no Firmware</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600">
+                    <div class="p-4 bg-slate-50 rounded-xl border">
+                        <p class="font-bold text-slate-800 mb-1">🚰 Irrigação Inteligente</p>
+                        <p>Ativada se umidade do solo &lt; 20% **E** sensor de boia (GPIO 4) indicar reservatório cheio (LOW).</p>
                     </div>
-                    <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Umid. Solo Mínima (%)</label>
-                        <input type="number" id="setpoint-solo-min" value="40" class="w-full border rounded-lg p-2 bg-slate-50">
+                    <div class="p-4 bg-slate-50 rounded-xl border">
+                        <p class="font-bold text-slate-800 mb-1">🍃 Ventilação Térmica</p>
+                        <p>Ativada se temperatura &gt; 32°C, umidade do ar &gt; 70% ou umidade do solo &gt; 60%.</p>
                     </div>
-                    <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Umid. Ar Mínima (%)</label>
-                        <input type="number" id="setpoint-ar-min" value="50" class="w-full border rounded-lg p-2 bg-slate-50">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Luz Mínima (Lux)</label>
-                        <input type="number" id="setpoint-luz-min" value="500" class="w-full border rounded-lg p-2 bg-slate-50">
+                    <div class="p-4 bg-slate-50 rounded-xl border">
+                        <p class="font-bold text-slate-800 mb-1">💡 Suplementação Lumínica</p>
+                        <p>Ativada automaticamente se a leitura analógica do LDR for inferior a 1800.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- ==================== SEÇÃO: CONEXÃO HARDWARE & FIREBASE ==================== -->
+        <!-- ==================== SEÇÃO: CONEXÃO FIREBASE ==================== -->
         <section id="tab-conexao" class="tab-content hidden space-y-6">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- FIREBASE CONFIG -->
-                <div class="bg-white p-6 rounded-2xl shadow-md">
-                    <h2 class="text-lg font-bold text-slate-800 mb-2"><i class="fa-solid fa-cloud text-orange-500 mr-2"></i> Conexão Firebase Realtime Database</h2>
-                    <p class="text-xs text-slate-500 mb-4">Insira a URL do seu banco de dados Firebase para conectar o painel ao vivo.</p>
-                    <div class="space-y-3 text-sm">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Database URL do Firebase</label>
-                            <input type="text" id="firebase-url" value="https://seu-projeto-default-rtdb.firebaseio.com" class="w-full border p-2 rounded-lg bg-slate-50 font-mono text-xs">
-                        </div>
-                        <button onclick="initFirebase()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2.5 px-4 rounded-xl shadow transition">
-                            Conectar ao Firebase
-                        </button>
+            <div class="bg-white p-6 rounded-2xl shadow-md max-w-2xl mx-auto">
+                <h2 class="text-lg font-bold text-slate-800 mb-2"><i class="fa-solid fa-cloud text-orange-500 mr-2"></i> Configuração do Firebase Realtime Database</h2>
+                <p class="text-xs text-slate-500 mb-4">O link do banco de dados do seu projeto já está preenchido abaixo. Clique para conectar.</p>
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Database URL</label>
+                        <input type="text" id="firebase-url" value="https://estufaautomatizada-40380-default-rtdb.firebaseio.com" class="w-full border p-2.5 rounded-lg bg-slate-50 font-mono text-xs">
                     </div>
-                </div>
-
-                <!-- CONEXÃO USB SERIAL -->
-                <div class="bg-white p-6 rounded-2xl shadow-md">
-                    <h2 class="text-lg font-bold text-slate-800 mb-2"><i class="fa-solid fa-usb text-blue-600 mr-2"></i> Conexão Direta USB (Web Serial API)</h2>
-                    <p class="text-xs text-slate-500 mb-4">Conecte o microcontrolador via cabo USB no navegador.</p>
-                    <button onclick="connectSerial()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow flex items-center justify-center gap-2 transition">
-                        <i class="fa-solid fa-plug"></i> Conectar Cabo USB / Porta Serial
+                    <button onclick="initFirebase()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-xl shadow transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plug"></i> Conectar e Sincronizar com o Firebase
                     </button>
-                    <div class="mt-4 p-3 bg-slate-900 text-emerald-400 font-mono text-xs rounded-xl h-24 overflow-y-auto" id="serial-log">
-                        > Aguardando conexão serial...
-                    </div>
                 </div>
             </div>
         </section>
@@ -379,64 +373,121 @@
             <div class="bg-white p-6 rounded-2xl shadow-md">
                 <div class="flex justify-between items-center mb-4">
                     <div>
-                        <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-code text-indigo-600 mr-2"></i> Código C++ (ESP32 + Firebase)</h2>
-                        <p class="text-xs text-slate-500">Código para envio de dados ao Firebase.</p>
+                        <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-code text-indigo-600 mr-2"></i> Código C++ Atualizado para ESP32</h2>
+                        <p class="text-xs text-slate-500">Código oficial do projeto com suporte a DHT11 e Firebase.</p>
                     </div>
                     <button onclick="copyCode()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold py-2 px-4 rounded-lg flex items-center gap-2">
                         <i class="fa-regular fa-copy"></i> Copiar Código
                     </button>
                 </div>
                 <pre class="bg-slate-900 text-emerald-400 p-4 rounded-xl text-xs font-mono overflow-x-auto h-96 border border-slate-700" id="esp32-code">
-#include &lt;WiFi.h&gt;
 #include &lt;FirebaseESP32.h&gt;
+#include &lt;WiFi.h&gt;
 #include &lt;DHT.h&gt;
+#include &lt;esp32/rom/ets_sys.h&gt;
+#include &lt;esp32-hal.h&gt;
 
-#define WIFI_SSID "ELIZABETH"
-#define WIFI_PASSWORD "29011953"
+const char* ssid = "STM_ULISSES_5G";
+const char* password = "30241146";
 
-#define DATABASE_URL "estufaautomatizada-40380-default-rtdb.firebaseio.com"
-#define DATABASE_SECRET "SEU_SEGREDO"
+#define FIREBASE_HOST "estufaautomatizada-40380-default-rtdb.firebaseio.com"
+#define FIREBASE_AUTH ""
 
-#define DHTPIN 4
-#define DHTTYPE DHT22
-#define PIN_SOLO 34
-#define PIN_LDR 35
+FirebaseData firebaseData;
+FirebaseConfig firebaseConfig;
+FirebaseAuth firebaseAuth;
 
-DHT dht(DHTPIN, DHTTYPE);
-FirebaseData fbdo;
-FirebaseAuth auth;
-FirebaseConfig config;
+const int boia = 4;         
+const int in1 = 5;          
+const int capacitivo = 34;    
+const int dht11 = 21;         
+const int ledVerde = 2;       
+const int ledVermelho = 15;   
+const int in2 = 18;           
+const int in3 = 19;           
+const int ldr = 35;           
+
+DHT dht(dht11, DHT11);
 
 void setup() {
   Serial.begin(115200);
+
+  pinMode(boia, INPUT_PULLUP);
+  pinMode(capacitivo, INPUT);
+  pinMode(ldr, INPUT);
+  pinMode(in1, OUTPUT);
+  pinMode(ledVerde, OUTPUT);
+  pinMode(ledVermelho, OUTPUT);
+  pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT);
+
   dht.begin();
-  
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  analogReadResolution(12);
+
+  WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
 
-  config.database_url = DATABASE_URL;
-  config.signer.test_mode = true;
-  Firebase.begin(&config, &auth);
+  firebaseConfig.host = FIREBASE_HOST;
+  firebaseConfig.signer.test_mode = true;
+  Firebase.begin(&firebaseConfig, &firebaseAuth);
   Firebase.reconnectWiFi(true);
 }
 
 void loop() {
-  float temp = dht.readTemperature();
-  float umid = dht.readHumidity();
-  int solo = map(analogRead(PIN_SOLO), 4095, 1500, 0, 100);
-  int lux = map(analogRead(PIN_LDR), 0, 4095, 0, 2000);
+  const int estadoBoia = digitalRead(boia);
+  const bool reservatorioCheio = (estadoBoia == LOW);
 
-  if (Firebase.ready()) {
-    Firebase.setFloat(fbdo, "/estufa/temperatura", temp);
-    Firebase.setFloat(fbdo, "/estufa/umidade", umid);
-    Firebase.setInt(fbdo, "/estufa/umidSolo", solo);
-    Firebase.setInt(fbdo, "/estufa/lux", lux);
+  const int valorSeco = 3000;
+  const int valorumido = 1200;
+  const int leituraBruta = analogRead(capacitivo);
+
+  int percentagemumidade = map(leituraBruta, valorSeco, valorumido, 0, 100);
+  percentagemumidade = constrain(percentagemumidade, 0, 100);
+
+  if (percentagemumidade &lt; 20) {
+    digitalWrite(in3, reservatorioCheio ? HIGH : LOW);
+    digitalWrite(ledVermelho, HIGH);
+  } else if (percentagemumidade &gt; 60) {
+    digitalWrite(in3, LOW);
+    digitalWrite(in1, HIGH);
+    digitalWrite(ledVermelho, HIGH);
+  } else {
+    digitalWrite(in3, LOW);
+    digitalWrite(ledVerde, HIGH);
   }
 
-  delay(2000);
+  const float umidadeAr = dht.readHumidity();
+  const float temperatura = dht.readTemperature();
+
+  if (!isnan(umidadeAr) && !isnan(temperatura)) {
+    if (temperatura &gt; 32.0 || umidadeAr &gt; 70.0) {
+      digitalWrite(in1, HIGH);
+      digitalWrite(ledVermelho, HIGH);
+    } else {
+      digitalWrite(in1, LOW);
+      digitalWrite(ledVerde, HIGH);
+    }
+  }
+
+  const int valorLDR = analogRead(ldr);
+  if (valorLDR &lt; 1800) {
+    digitalWrite(in2, HIGH);
+  } else {
+    digitalWrite(in2, LOW);
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Firebase.setFloat(firebaseData, "/estufa/temperatura", temperatura);
+    Firebase.setFloat(firebaseData, "/estufa/umidadeAr", umidadeAr);
+    Firebase.setInt(firebaseData, "/estufa/umidadeSolo", percentagemumidade);
+    Firebase.setInt(firebaseData, "/estufa/luminosidade", valorLDR);
+    Firebase.setBool(firebaseData, "/estufa/reservatorioCheio", reservatorioCheio);
+  }
+
+  delay(5000);
 }
                 </pre>
             </div>
@@ -445,41 +496,71 @@ void loop() {
         <!-- ==================== SEÇÃO: ESQUEMA ELÉTRICO ==================== -->
         <section id="tab-esquema" class="tab-content hidden space-y-6">
             <div class="bg-white p-6 rounded-2xl shadow-md">
-                <h2 class="text-xl font-bold text-slate-800 mb-4"><i class="fa-solid fa-diagram-project text-emerald-600 mr-2"></i> Mapeamento dos Pinos de Ligação</h2>
+                <h2 class="text-xl font-bold text-slate-800 mb-4"><i class="fa-solid fa-diagram-project text-emerald-600 mr-2"></i> Mapeamento de Pinos (ESP32)</h2>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm text-slate-600">
                         <thead class="bg-slate-100 text-slate-800 uppercase text-xs">
                             <tr>
                                 <th class="p-3">Componente</th>
-                                <th class="p-3">Pino</th>
+                                <th class="p-3">Variável no Código</th>
                                 <th class="p-3">Pino ESP32</th>
-                                <th class="p-3">Função</th>
+                                <th class="p-3">Tipo de Pino</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y">
                             <tr>
-                                <td class="p-3 font-semibold text-slate-800">DHT22</td>
-                                <td class="p-3">DATA</td>
+                                <td class="p-3 font-semibold text-slate-800">Sensor de Nível (Boia)</td>
+                                <td class="p-3"><code>boia</code></td>
                                 <td class="p-3 text-emerald-600 font-bold">GPIO 4</td>
-                                <td class="p-3">Temperatura e Umidade do Ar</td>
+                                <td class="p-3">INPUT_PULLUP</td>
                             </tr>
                             <tr>
-                                <td class="p-3 font-semibold text-slate-800">Sensor Solo</td>
-                                <td class="p-3">A0</td>
+                                <td class="p-3 font-semibold text-slate-800">Ventoinha / Exaustor</td>
+                                <td class="p-3"><code>in1</code></td>
+                                <td class="p-3 text-blue-600 font-bold">GPIO 5</td>
+                                <td class="p-3">OUTPUT</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">Sensor Umidade do Solo</td>
+                                <td class="p-3"><code>capacitivo</code></td>
                                 <td class="p-3 text-emerald-600 font-bold">GPIO 34</td>
-                                <td class="p-3">Umidade do Solo</td>
+                                <td class="p-3">INPUT (Analógico ADC)</td>
                             </tr>
                             <tr>
-                                <td class="p-3 font-semibold text-slate-800">LDR</td>
-                                <td class="p-3">Sinal</td>
+                                <td class="p-3 font-semibold text-slate-800">Sensor DHT11</td>
+                                <td class="p-3"><code>dht11</code></td>
+                                <td class="p-3 text-emerald-600 font-bold">GPIO 21</td>
+                                <td class="p-3">Digital (OneWire)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">LED Verde (Status Normal)</td>
+                                <td class="p-3"><code>ledVerde</code></td>
+                                <td class="p-3 text-blue-600 font-bold">GPIO 2</td>
+                                <td class="p-3">OUTPUT</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">LED Vermelho (Alerta)</td>
+                                <td class="p-3"><code>ledVermelho</code></td>
+                                <td class="p-3 text-blue-600 font-bold">GPIO 15</td>
+                                <td class="p-3">OUTPUT</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">Fita de LED (Iluminação)</td>
+                                <td class="p-3"><code>in2</code></td>
+                                <td class="p-3 text-blue-600 font-bold">GPIO 18</td>
+                                <td class="p-3">OUTPUT</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">Bomba d'Água (Irrigação)</td>
+                                <td class="p-3"><code>in3</code></td>
+                                <td class="p-3 text-blue-600 font-bold">GPIO 19</td>
+                                <td class="p-3">OUTPUT</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">Sensor LDR (Luz)</td>
+                                <td class="p-3"><code>ldr</code></td>
                                 <td class="p-3 text-emerald-600 font-bold">GPIO 35</td>
-                                <td class="p-3">Luminosidade</td>
-                            </tr>
-                            <tr>
-                                <td class="p-3 font-semibold text-slate-800">Módulo Relés</td>
-                                <td class="p-3">IN1 a IN4</td>
-                                <td class="p-3 text-blue-600 font-bold">GPIO 26, 27, 14, 12</td>
-                                <td class="p-3">Atuadores (Bomba, Exaustor, Luz, Nebulizador)</td>
+                                <td class="p-3">INPUT (Analógico ADC)</td>
                             </tr>
                         </tbody>
                     </table>
@@ -491,16 +572,16 @@ void loop() {
         <section id="tab-simulador" class="tab-content hidden space-y-6">
             <div class="bg-white p-6 rounded-2xl shadow-md">
                 <h2 class="text-xl font-bold text-slate-800 mb-2"><i class="fa-solid fa-sliders text-amber-600 mr-2"></i> Simulador de Condições Ambientais</h2>
-                <p class="text-xs text-slate-500 mb-6">Mova os controles para testar o painel caso o Firebase não esteja conectado.</p>
+                <p class="text-xs text-slate-500 mb-6">Mova os controles para testar o painel caso o ESP32 não esteja enviando dados em tempo real.</p>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
                     <div>
-                        <label class="block font-semibold mb-1">Temperatura: <span id="sim-temp-val" class="text-amber-600 font-bold">24.5 °C</span></label>
+                        <label class="block font-semibold mb-1">Temperatura (DHT11): <span id="sim-temp-val" class="text-amber-600 font-bold">24.5 °C</span></label>
                         <input type="range" min="10" max="45" step="0.5" value="24.5" class="w-full h-2 bg-slate-200 rounded-lg accent-amber-500" oninput="updateSim('temp', this.value)">
                     </div>
 
                     <div>
-                        <label class="block font-semibold mb-1">Umidade do Ar: <span id="sim-umid-ar-val" class="text-cyan-600 font-bold">65 %</span></label>
+                        <label class="block font-semibold mb-1">Umidade do Ar (DHT11): <span id="sim-umid-ar-val" class="text-cyan-600 font-bold">65 %</span></label>
                         <input type="range" min="10" max="100" step="1" value="65" class="w-full h-2 bg-slate-200 rounded-lg accent-cyan-500" oninput="updateSim('umidAr', this.value)">
                     </div>
 
@@ -510,8 +591,8 @@ void loop() {
                     </div>
 
                     <div>
-                        <label class="block font-semibold mb-1">Luminosidade: <span id="sim-luz-val" class="text-yellow-600 font-bold">780 Lux</span></label>
-                        <input type="range" min="0" max="2000" step="10" value="780" class="w-full h-2 bg-slate-200 rounded-lg accent-yellow-500" oninput="updateSim('lux', this.value)">
+                        <label class="block font-semibold mb-1">Luminosidade (LDR): <span id="sim-luz-val" class="text-yellow-600 font-bold">2100</span></label>
+                        <input type="range" min="0" max="4095" step="10" value="2100" class="w-full h-2 bg-slate-200 rounded-lg accent-yellow-500" oninput="updateSim('lux', this.value)">
                     </div>
                 </div>
             </div>
@@ -523,7 +604,7 @@ void loop() {
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                     <div>
                         <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-table text-slate-700 mr-2"></i> Histórico de Registros de Telemetria</h2>
-                        <p class="text-xs text-slate-500">Dados coletados continuamente.</p>
+                        <p class="text-xs text-slate-500">Dados coletados continuamente da estufa.</p>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="exportCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-4 rounded-lg shadow">
@@ -607,11 +688,10 @@ void loop() {
             temp: 24.5,
             umidAr: 65,
             umidSolo: 55,
-            lux: 780
+            lux: 2100,
+            reservatorioCheio: true
         };
 
-        let relayStates = { 1: false, 2: false, 3: false, 4: false };
-        let autoMode = true;
         let dataHistory = [];
         let chartInstance = null;
         let simulationInterval = null;
@@ -619,6 +699,8 @@ void loop() {
         document.addEventListener('DOMContentLoaded', () => {
             initChart();
             startSimulation();
+            // Inicia automático com o Firebase configurado
+            initFirebase();
         });
 
         function switchTab(tabId) {
@@ -644,7 +726,7 @@ void loop() {
                         { label: 'Temperatura (°C)', data: [], borderColor: '#f59e0b', tension: 0.3, fill: false },
                         { label: 'Umidade Ar (%)', data: [], borderColor: '#06b6d4', tension: 0.3, fill: false },
                         { label: 'Umidade Solo (%)', data: [], borderColor: '#16a34a', tension: 0.3, fill: false },
-                        { label: 'Luminosidade (x10 Lux)', data: [], borderColor: '#eab308', tension: 0.3, borderDash: [5, 5], fill: false }
+                        { label: 'Luminosidade (x10)', data: [], borderColor: '#eab308', tension: 0.3, borderDash: [5, 5], fill: false }
                     ]
                 },
                 options: {
@@ -662,10 +744,48 @@ void loop() {
             document.getElementById('temperatura').innerText = `${currentData.temp.toFixed(1)} °C`;
             document.getElementById('umidade').innerText = `${Math.round(currentData.umidAr)} %`;
             document.getElementById('val-umid-solo').innerText = `${Math.round(currentData.umidSolo)} %`;
-            document.getElementById('val-luz').innerText = `${Math.round(currentData.lux)} Lux`;
+            document.getElementById('val-luz').innerText = Math.round(currentData.lux);
 
-            if (autoMode) {
-                checkAutoRules();
+            // Atualiza status da boia
+            const boiaStatus = document.getElementById('status-boia');
+            if (currentData.reservatorioCheio) {
+                boiaStatus.innerText = "Cheio (OK)";
+                boiaStatus.className = "text-emerald-400 font-bold";
+            } else {
+                boiaStatus.innerText = "Vazio (Alerta)";
+                boiaStatus.className = "text-red-400 font-bold animate-pulse";
+            }
+
+            // Atualiza estados visuais dos atuadores baseados nas regras do ESP32
+            const badgeBomba = document.getElementById('badge-bomba');
+            const badgeVentoinha = document.getElementById('badge-ventoinha');
+            const badgeLuz = document.getElementById('badge-luz');
+
+            // Bomba liga se solo < 20% e reservatório cheio
+            if (currentData.umidSolo < 20 && currentData.reservatorioCheio) {
+                badgeBomba.innerText = "LIGADO";
+                badgeBomba.className = "px-3 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white";
+            } else {
+                badgeBomba.innerText = "DESLIGADO";
+                badgeBomba.className = "px-3 py-1 text-xs font-bold rounded-lg bg-slate-200 text-slate-700";
+            }
+
+            // Ventoinha liga se temp > 32 ou umidAr > 70 ou solo > 60
+            if (currentData.temp > 32.0 || currentData.umidAr > 70.0 || currentData.umidSolo > 60) {
+                badgeVentoinha.innerText = "LIGADO";
+                badgeVentoinha.className = "px-3 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white";
+            } else {
+                badgeVentoinha.innerText = "DESLIGADO";
+                badgeVentoinha.className = "px-3 py-1 text-xs font-bold rounded-lg bg-slate-200 text-slate-700";
+            }
+
+            // Fita LED liga se LDR < 1800
+            if (currentData.lux < 1800) {
+                badgeLuz.innerText = "LIGADO";
+                badgeLuz.className = "px-3 py-1 text-xs font-bold rounded-lg bg-yellow-500 text-white";
+            } else {
+                badgeLuz.innerText = "DESLIGADO";
+                badgeLuz.className = "px-3 py-1 text-xs font-bold rounded-lg bg-slate-200 text-slate-700";
             }
 
             const now = new Date().toLocaleTimeString();
@@ -685,39 +805,6 @@ void loop() {
             addLogRow(now, currentData.temp, currentData.umidAr, currentData.umidSolo, currentData.lux);
         }
 
-        function checkAutoRules() {
-            const maxTemp = parseFloat(document.getElementById('setpoint-temp-max').value);
-            const minSolo = parseFloat(document.getElementById('setpoint-solo-min').value);
-            const minAr = parseFloat(document.getElementById('setpoint-ar-min').value);
-            const minLuz = parseFloat(document.getElementById('setpoint-luz-min').value);
-
-            setRelayState(1, currentData.umidSolo < minSolo);
-            setRelayState(2, currentData.temp > maxTemp);
-            setRelayState(3, currentData.lux < minLuz);
-            setRelayState(4, currentData.umidAr < minAr);
-        }
-
-        function setRelayState(id, state) {
-            relayStates[id] = state;
-            const btn = document.getElementById(`btn-rele-${id}`);
-            if (state) {
-                btn.innerText = 'LIGADO';
-                btn.className = 'px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-white transition';
-            } else {
-                btn.innerText = 'DESLIGADO';
-                btn.className = 'px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 transition';
-            }
-        }
-
-        function toggleRelay(id) {
-            if (autoMode) return alert('Desative o Modo Automático para controlar os relés manualmente.');
-            setRelayState(id, !relayStates[id]);
-        }
-
-        function toggleAutoMode(isAuto) {
-            autoMode = isAuto;
-        }
-
         function startSimulation() {
             if (simulationInterval) clearInterval(simulationInterval);
             simulationInterval = setInterval(() => {
@@ -729,30 +816,21 @@ void loop() {
 
         function updateSim(key, val) {
             currentData[key] = parseFloat(val);
-            document.getElementById(`sim-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}-val`).innerText = val + (key === 'temp' ? ' °C' : key === 'lux' ? ' Lux' : ' %');
+            document.getElementById(`sim-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}-val`).innerText = val + (key === 'temp' ? ' °C' : key === 'lux' ? '' : ' %');
             updateUI();
         }
 
         // INTEGRAÇÃO FIREBASE REALTIME DATABASE
         function initFirebase() {
             const dbUrl = document.getElementById('firebase-url').value.trim();
-            if (!dbUrl) {
-                alert('Insira uma URL válida do Firebase.');
-                return;
-            }
+            if (!dbUrl) return;
 
             try {
                 if (simulationInterval) clearInterval(simulationInterval);
 
-                const firebaseConfig = {
-                    databaseURL: dbUrl
-                };
-
+                const firebaseConfig = { databaseURL: dbUrl };
                 if (!firebase.apps.length) {
                     firebase.initializeApp(firebaseConfig);
-                } else {
-                    // Atualiza app se já inicializado
-                    firebase.app().options.databaseURL = dbUrl;
                 }
 
                 const db = firebase.database();
@@ -762,13 +840,10 @@ void loop() {
                     const dados = snapshot.val();
                     if (dados) {
                         if (dados.temperatura !== undefined) currentData.temp = dados.temperatura;
-                        else if (dados.temp !== undefined) currentData.temp = dados.temp;
-
-                        if (dados.umidade !== undefined) currentData.umidAr = dados.umidade;
-                        else if (dados.umidAr !== undefined) currentData.umidAr = dados.umidAr;
-
-                        if (dados.umidSolo !== undefined) currentData.umidSolo = dados.umidSolo;
-                        if (dados.lux !== undefined) currentData.lux = dados.lux;
+                        if (dados.umidadeAr !== undefined) currentData.umidAr = dados.umidadeAr;
+                        if (dados.umidadeSolo !== undefined) currentData.umidSolo = dados.umidadeSolo;
+                        if (dados.luminosidade !== undefined) currentData.lux = dados.luminosidade;
+                        if (dados.reservatorioCheio !== undefined) currentData.reservatorioCheio = dados.reservatorioCheio;
 
                         updateUI();
 
@@ -777,13 +852,9 @@ void loop() {
                         document.getElementById('status-text').innerText = 'Conectado ao Firebase Realtime Database';
                         document.getElementById('status-indicator').className = 'w-2.5 h-2.5 rounded-full bg-orange-500';
                     }
-                }, (error) => {
-                    alert('Erro ao conectar ao Firebase: ' + error.message);
                 });
-
-                alert('Conexão com Firebase iniciada com sucesso!');
             } catch (err) {
-                alert('Erro ao inicializar Firebase: ' + err.message);
+                console.error(err);
             }
         }
 
@@ -795,7 +866,7 @@ void loop() {
                 <td class="p-3 font-semibold">${temp.toFixed(1)} °C</td>
                 <td class="p-3">${Math.round(ar)} %</td>
                 <td class="p-3">${Math.round(solo)} %</td>
-                <td class="p-3">${Math.round(lux)} Lux</td>
+                <td class="p-3">${Math.round(lux)}</td>
             `;
             tbody.insertBefore(row, tbody.firstChild);
             dataHistory.push({ time, temp, ar, solo, lux });
@@ -806,11 +877,11 @@ void loop() {
             dataHistory.forEach(r => {
                 csv += `${r.time},${r.temp.toFixed(1)},${r.ar},${r.solo},${r.lux}\n`;
             });
-            downloadFile(csv, "estufa_firebase_telemetria.csv", "text/csv");
+            downloadFile(csv, "estufa_telemetria.csv", "text/csv");
         }
 
         function exportJSON() {
-            downloadFile(JSON.stringify(dataHistory, null, 2), "estufa_firebase_telemetria.json", "application/json");
+            downloadFile(JSON.stringify(dataHistory, null, 2), "estufa_telemetria.json", "application/json");
         }
 
         function downloadFile(content, fileName, mimeType) {
@@ -825,43 +896,6 @@ void loop() {
             const code = document.getElementById('esp32-code').innerText;
             navigator.clipboard.writeText(code);
             alert('Código ESP32 copiado para a área de transferência!');
-        }
-
-        async function connectSerial() {
-            if ('serial' in navigator) {
-                try {
-                    const port = await navigator.serial.requestPort();
-                    await port.open({ baudRate: 115200 });
-                    document.getElementById('serial-status').innerText = 'Conectado';
-                    document.getElementById('serial-status').className = 'text-emerald-400 font-bold';
-                    document.getElementById('status-text').innerText = 'Conectado via USB Serial';
-                    document.getElementById('status-indicator').className = 'w-2.5 h-2.5 rounded-full bg-emerald-500';
-
-                    const textDecoder = new TextDecoderStream();
-                    const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
-                    const reader = textDecoder.readable.getReader();
-
-                    while (true) {
-                        const { value, done } = await reader.read();
-                        if (done) break;
-                        if (value) {
-                            document.getElementById('serial-log').innerText += value;
-                            try {
-                                const json = JSON.parse(value);
-                                if (json.temp) currentData.temp = json.temp;
-                                if (json.umidAr) currentData.umidAr = json.umidAr;
-                                if (json.umidSolo) currentData.umidSolo = json.umidSolo;
-                                if (json.lux) currentData.lux = json.lux;
-                                updateUI();
-                            } catch (e) {}
-                        }
-                    }
-                } catch (err) {
-                    alert('Erro ao conectar porta Serial: ' + err);
-                }
-            } else {
-                alert('Web Serial API não suportada neste navegador. Use Google Chrome ou Edge.');
-            }
         }
     </script>
 </body>
